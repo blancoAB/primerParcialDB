@@ -1,3 +1,7 @@
+//SISTEMA ACADÉMICO WEB, DE GESTIÓN DE PROCESOS ACADÉMICOS, ADMINISTRATIVOS Y DE COMUNICACIÓN, DENTRO LA UNIDAD EDUCATIVA DON BOSCO
+
+//OBJETIVO GENERAL Diseñar e implementar un sistema académico web para la gestión integral de los procesos académicos, administrativos y de comunicación dentro de la Unidad Educativa Don Bosco.
+
 //LLAMAR LIBRERIAS
 const express = require('express');
 const mongoose = require('mongoose');
