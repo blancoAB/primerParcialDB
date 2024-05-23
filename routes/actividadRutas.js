@@ -2,6 +2,7 @@
 const express = require('express');
 const routes = express.Router();
 const ActividadModel = require('../models/actividades');
+const UsuarioModel = require('../models/usuario');
 
 //endpoint1 traer todas las actividades
 routes.get('/traerActividades',async (req,res) => {
@@ -16,13 +17,19 @@ routes.get('/traerActividades',async (req,res) => {
 routes.post('/crear',async (req,res) => {
     const actividad= new ActividadModel({
         actividad : req.body.actividad,
-        tipo : req.body.tipo,
-        responsable : req.body.responsable,
-        lugar : req.body.lugar,
-        descripcion : req.body.descripcion
+        idtipo : req.body.idtipo,
+        idresponsable : req.body.idresponsable,
+        participantes : req.body.participantes,
+        fecha : req.body.fecha,
+        hora : req.body.hora,
+        descripcion : req.body.descripcion,
+        observacion : req.body.observacion,
+        documento : req.body.documento,
+        usuario : req.body.usuario//asignar el Id del usuario
     })
     try{
         const nuevaActividad = await actividad.save();
+        console.log(actividad);
         res.status(201).json(nuevaActividad);
     }catch (error){
         res.status(400).json({mensaje:error.message});
@@ -67,52 +74,71 @@ routes.get('/encontrardescripcion/:descripcion', async (req, res) => {
     }
 });
 
-//endpoint6 Buscar todas las actividades de tipo "Mes mariano" y ordenarlo por nombre de actividad en forma ascendente:
-routes.get('/encontrartipo/:tipo', async (req, res) => {
+//endpoint6 Buscar todas las actividades de hora "8:30 para adelante" y ordenarlo por nombre de actividad en forma ascendente:
+routes.get('/encontrarhora/:hora', async (req, res) => {
     try {
-        const actividadTipo = await ActividadModel.find({ tipo: req.params.tipo}).sort({ actividad: 1 });
-        return res.json(actividadTipo);
+        const actividadHora = await ActividadModel.find({ hora: req.params.hora}).sort({ actividad: 1 });
+        return res.json(actividadHora);
     } catch(error) {
         res.status(400).json({ mensaje :  error.message})
     }
 });
 
-//endpoint7 Buscar todas las actividades sociales o académicas:
-routes.get('/dostipos/:tipo', async (req, res) => {
+//endpoint7 Buscar todas las actividades donde las fechas sean "27 de mayo" y "29 de mayo":
+routes.get('/dosfechas/:fecha', async (req, res) => {
     try {
-        const tiposPermitidos = ["Social", "Academico"];
-        if (!tiposPermitidos.includes(req.params.tipo)) {
-            return res.status(400).json({ mensaje: "Tipo de actividad no válido" });
+        const fechasPermitidos = ["27 de mayo" , "29 de mayo"];
+        if (!fechasPermitidos.includes(req.params.fecha)) {
+            return res.status(400).json({ mensaje: "Fecha de actividad no válido" });
         }
         
-        const actividadTipo = await ActividadModel.find({ tipo: req.params.tipo });
-        return res.json(actividadTipo);
+        const actividadFecha = await ActividadModel.find({ fecha: req.params.fecha });
+        return res.json(actividadFecha);
     } catch(error) {
         res.status(400).json({ mensaje: error.message });
     }
 });
-//endpoint8 Encontrar todas las actividades organizadas por la "Comisión Pastoral" que no son de tipo "Mes mariano":
-routes.get('/responsable/:responsable', async (req, res) => {
+//endpoint8 Encontrar todas las actividades donde participen "profesores y estudiantes" pero que no sea en fecha "6 de mayo":
+routes.get('/participantes/:participantes', async (req, res) => {
     try {
-        const actividadResponsable = await ActividadModel.find({ 
-            responsable: req.params.responsable,
-            tipo: { $ne: "Mes Mariano" } // Buscar actividades que no sean de tipo "Mes mariano"
+        const actividadParticipantes = await ActividadModel.find({ 
+            participantes: req.params.participantes,
+            fecha: { $ne: "6 de mayo" } // Buscar actividades que no sean de fecha "6 de mayo"
         });
-        return res.json(actividadResponsable);
+        return res.json(actividadParticipantes);
     } catch(error) {
         res.status(500).json({ mensaje :  error.message})
     }
 });
 
-//endpoint9 Contar todas las actividades organizadas por la "Comisión Pastoral"
-routes.get('/contar/:responsable', async (req, res) => {
+//endpoint9 Contar todas las actividades donde participen los "profesores y estudiantes"
+routes.get('/contar/:participantes', async (req, res) => {
     try {
-        const actividadResponsable = await ActividadModel.countDocuments({ responsable: req.params.responsable});
-        return res.json(actividadResponsable);
+        const actividadParticipantes = await ActividadModel.countDocuments({ participantes: req.params.participantes});
+        return res.json(actividadParticipantes);
     } catch(error) {
         res.status(400).json({ mensaje :  error.message})
     }
 });
+
+
+//REPORTE 1 traer actividades por usuario
+routes.get('/actividadusuario/:usuarioId', async(peticion,respuesta)=>{
+    const {usuarioId} = peticion.params;
+    console.log(usuarioId);
+    try{
+        const usuario = await UsuarioModel.findById(usuarioId);
+        if(!usuario)
+            return respuesta.status(404).json({mensaje:'usuario no encontrado'});
+        const actividad = await ActividadModel.find({usuario: usuarioId}).populate('usuario');
+    respuesta.json(actividad) ;
+    }
+    catch(error){
+        respuesta.status(500).json({mensaje: error.message})
+    }
+});
+
+//REPORTE 2 traer actividades por profesor del tipo social
 
 
 module.exports = routes;
